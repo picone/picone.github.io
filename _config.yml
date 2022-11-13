@@ -1,0 +1,20 @@
+title: HoHo's Blog
+lang: zh-CN
+email: picone121@gmail.com
+description: "这是我的个人博客，对于内容的疑问可以通过邮箱与我取得联系。"
+baseurl: ""
+url: "https://picone.github.io"
+repository: "picone/picone.github.io"
+twitter_username: ChienHooo
+github_username:  picone
+theme: jekyll-theme-slate
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-paginate
+paginate: 10
+markdown: GFM
+google_analytics: G-YTQ4DW2438
+sass:
+  sass_dir: _sass
+  style: compressed
