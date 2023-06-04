@@ -7,7 +7,7 @@ layout: default
 </h1>
 <p class="author">
     <span class="date">{{ post.date | date_to_string }}</span>
-    <span>字数：{{ post.content | number_of_words }}</span>
+    <span>字数：{{ post.content | strip_html | strip_newlines | remove: " " | size }}</span>
 </p>
 <div class="content">
     {{ post.description }}
