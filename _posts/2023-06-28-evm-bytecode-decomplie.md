@@ -179,3 +179,37 @@ print(res)
 ```
 执行结果是 revert 了，返回
 `AccessControl: account 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 is missing role 0x0000000000000000000000000000000000000000000000000000000000000000`。
+
+又或者可以使用 hardhat 的 [tracecall](https://github.com/zemse/hardhat-tracer) 插件可以很方便 debug。
+
+```shell
+npx hardhat tracecall --to 0x61609230D6A26954B67D5e5A370A9d69BcB9c1F8 --data 0xxxxx --rpc http://127.0.0.1:8545
+```
+
+考虑更多的攻击地方法：
+
+- 签名重放：测试服务器请求 withdraw-flt 接口会返回 signature 等参数。但是抓包发现，服务端其实是监听了链上的事件来感知提币完成，而不经过前端 UI
+  发送的请求。遗憾地，deadline 经过观察只有 2 分钟的有效时间，所以这个签名只能在 2 分钟内 commit，而提币频率限制是 2 小时，服务端在 2 小时内肯定
+  能监听到这笔提款，所以这个方法不可行。
+
+- 签名内容纂改：这种问题常见于使用了 `keccak256(abi.encodePacked())` 的签名，这种签名可以通过构造不同的参数来进行签名，比如
+  `keccak256(abi.encodePacked(1, 2))` 和 `keccak256(abi.encodePacked(12))` 的签名是一样的，这样就可以构造出不同的参数来进行签名。
+  详见[这篇文档](https://docs.soliditylang.org/en/latest/abi-spec.html#non-standard-packed-mode)。
+  针对这个 case，它是 `keccak256(caller, item_id, order_id, amount, deadline)` 进行签名的，所以有一种可能是通过把 `order_id` 和
+  `amount` 的位置进行位移，相当于增加了 `amount` 的数量，并且能生成不同的 `order_id` 绕过订单重复判断。但很遗憾地，这个合约并没有这么做，这个
+  法子行不通。
+- 签名移花接木：通过构造数据让服务端在某些场景下也签名，构造相同的签名消息，但是修改实际使用的场景。因为这个合约签名时候并没有明确指明签名的用途，是 
+  挺危险的，正常的合约会这么做：
+  ```solidity
+  keccak256(
+    abi.encode(
+      keccak256("WithdrawFIL(address,uint256,uint256,uint256,uint256)"),
+      caller,
+      item_id,
+      order_id,
+      amount,
+      deadline
+    )
+  )
+  ```
+  但是很遗憾地，找遍了这个游戏的其他合约没有发现能移花接木的地方。主要还是那个 item_id 卡的太死了。
