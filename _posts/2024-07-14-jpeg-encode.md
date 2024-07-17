@@ -51,7 +51,8 @@ ZigZag 是 JPEG 图片编码中用来把 DCT 变换后的系数排列成一维�
 2. 根据确定的采样因子划分 MCU（Minimum Coded Unit）。常见的是 4:2:2 和 4:2:0 采样因子，采样如下图：
   ![YCbCr Sampling]({{ "/assets/images/2024-07-14-ycbcr-sampling.jpg" | relative_url }})
   由于色差信号中的 Cb、Cr 通道比较不重要，因此适当进行降采样可以减小图片的大小。因为我们这里使用的是 4:2:2 采样，所以每个 MCU 输出为 16x16
-  的像素块，并划分成 4 个 8x8 的编码单元，其中有 4 个 Y 通道的编码单元，2 个 Cb 通道，2 个 Cr 通道。
+  的像素块，并划分成 4 个 8x8 的编码单元，其中有 4 个 Y 通道的编码单元，2 个 Cb 通道，2 个 Cr 通道。如果是 4:4:4 采样，那么 MCU 的大小
+  则为 8x8，每个 MCU 有 1 个 Y 通道，1 个 Cb 通道，1 个 Cr 通道。
     1. 对于每个 8x8 的编码单元，进行 DCT 变换。变换结果是 1 个 DC 信号和 63 个 AC 信号。
     2. 对图片进行量化，量化表的作用是把大的数字直接除以一个固定值然后四舍五入，这样可以把大的数字变成小的数字，使得后面哈夫曼编码时数字重复几率
       更高哈夫曼编码压缩率更高。量化表里的数字越大代表压缩率越高。一般来说会对 Y 通道使用更小的量化表，压缩率更低，而对 Cb、Cr 通道使用更大的
@@ -166,6 +167,20 @@ quantity 选择低质量时图片边缘会出现模糊的原因，这个边缘�
 
 JPEG 是一种有损的压缩算法，主要压缩的地方有：
 - 使用色差信号分离出亮度和色彩信号，对色彩信号进行抽样和其他更高的压缩率操作。
+- 可以使用升降采样来对不同的色差信号通道抽样从而增加压缩率。
 - 使用 DCT 把空域转换成频域的信号，对高频信号进行更高的压缩操作。
 - 对 DCT 变换后的信号进行量化，量化表的值越大，压缩率越高。量化后的信号会越来越多的 0，这样可以使用 RLE 来压缩。
 - 使用哈夫曼编码对量化后的信号进行编码，哈夫曼编码会根据信号的出现频率来分配不同长度的编码，出现频率越高的信号，分配的编码长度越短。
+
+每个 MCU 是单独压缩的，在压缩率较高的情况下，可能导致 MCU 之间边缘会出现截然不一样的边缘陡变。
+
+根据[香农极限](https://en.wikipedia.org/wiki/Shannon%E2%80%93Hartley_theorem)我们可知，一定的信道容量，无损的压缩是有一定上限的。
+需要在文件大小和质量之间取得平衡，JPEG 选择把对人眼不敏感的信号进行更高的压缩率，从而达到更高的压缩率。
+
+# References
+
+- [JPEG图片编码格式分析](https://blog.csdn.net/picone/article/details/123788128)
+- [The Ultimate Guide to JPEG Including JPEG Compression & Encoding](https://www.thewebmaster.com/jpeg-definitive-guide/)
+- [Chroma subsampling](https://en.wikipedia.org/wiki/Chroma_subsampling)
+- [离散余弦变换（DCT）的来龙去脉](https://blog.csdn.net/dugudaibo/article/details/78410570)
+- [JPEG File Interchange Format](https://en.wikipedia.org/wiki/JPEG_File_Interchange_Format)
