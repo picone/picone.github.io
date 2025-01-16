@@ -55,3 +55,5 @@ while (dinfo.output_scanline < crop_top + crop_height) {
     current_row += img_row_size;
 }
 ```
+
+# 图片缩放
