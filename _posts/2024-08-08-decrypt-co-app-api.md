@@ -67,8 +67,12 @@ String signature = Base64.encodeBase64String(md5Result);
 
 ## 获取 appSecret
 
-最初的想法是直接反编译 APP 找相关的字符串。可是发现某克直接把 APP 的代码放到 so 里并加密了，运行时再动态解密，因此静态去分析会比较困难。所以
-考虑动态的办法。由于我们前面已经铺平了道路可以在 Magisk 的环境下启动某克 APP 了，因此我们可以尝试找切入点 Hook 并把对应的私钥打出来。
+最初的想法是直接反编译 APP 找相关的字符串。可是发现某克直接把 APP 的代码放到 so 里并加密了，运行时再动态解密，因此静态去分析会比较困难。
+
+![Java decompiler]({{ "/assets/images/2024-08-08-java-decompiler.png" | relative_url }})
+
+因此，考虑别的办法，动态分析就是很好的办法。由于我们前面已经铺平了道路可以在 Magisk 的环境下启动某克 APP 了，因此我们可以尝试找切入点 Hook
+并把对应的私钥打出来。
 
 这里我们继续做一个假设，它使用的是官方的 Java SDK，通过看官方 SDK 的代码，在构造 Signer 的时候会传入 `appSecret` 
 [permalink](https://github.com/aliyun/apigateway-sdk-core/blob/13fb5ee76a3c9241972a023193a6f3381ecf18e3/src/main/java/com/alibaba/cloudapi/sdk/signature/HMacSHA256SignerFactory.java#L45)。
